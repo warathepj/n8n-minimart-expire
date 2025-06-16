@@ -1,5 +1,15 @@
 import sqlite3
 import csv
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+import os
+
+PORT = 8000
+
+class MyHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/':
+            self.path = '/index.html'
+        return SimpleHTTPRequestHandler.do_GET(self)
 
 def create_database():
     """Creates an SQLite database named 'data.db' and the transactions table."""
@@ -42,3 +52,9 @@ if __name__ == "__main__":
     first_3_rows = fetch_first_n_rows('data.db', 3)
     for row in first_3_rows:
         print(row)
+
+    # Start the HTTP server
+    os.chdir('.') # Ensure serving from the current directory
+    with HTTPServer(("", PORT), MyHandler) as httpd:
+        print(f"Serving index.html at http://localhost:{PORT}")
+        httpd.serve_forever()
