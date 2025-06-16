@@ -6,6 +6,41 @@
     <title>Document</title>
 </head>
 <body>
-    <p>hello world</p>
+    <div id="data-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('data-container');
+                    if (data.length > 0) {
+                        let tableHTML = '<table><thead><tr>';
+                        // Create table headers
+                        for (const key in data[0]) {
+                            tableHTML += `<th>${key}</th>`;
+                        }
+                        tableHTML += '</tr></thead><tbody>';
+
+                        // Create table rows
+                        data.forEach(row => {
+                            tableHTML += '<tr>';
+                            for (const key in row) {
+                                tableHTML += `<td>${row[key]}</td>`;
+                            }
+                            tableHTML += '</tr>';
+                        });
+                        tableHTML += '</tbody></table>';
+                        container.innerHTML = tableHTML;
+                    } else {
+                        container.innerHTML = '<p>No data available.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('data-container').innerHTML = '<p>Error loading data.</p>';
+                });
+        });
+    </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 import sqlite3
 import csv
+import json
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import os
 
@@ -7,47 +8,42 @@ PORT = 8000
 
 class MyHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/':
+        if self.path == '/data':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            
+            # Fetch data from the database
+            rows = fetch_first_n_rows('data.db', 10) # Fetching first 10 rows for example
+            
+            # Get column names from the cursor description
+            conn = sqlite3.connect('data.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM items LIMIT 0') # Get schema without fetching data
+            column_names = [description[0] for description in cursor.description]
+            conn.close()
+
+            # Convert rows to a list of dictionaries
+            data = []
+            for row in rows:
+                data.append(dict(zip(column_names, row)))
+            
+            self.wfile.write(json.dumps(data).encode('utf-8'))
+            return
+        elif self.path == '/':
             self.path = '/index.html'
         return SimpleHTTPRequestHandler.do_GET(self)
 
-def create_database():
-    """Creates an SQLite database named 'data.db' and the transactions table."""
-    conn = sqlite3.connect('data.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS transactions (
-            TransactionID TEXT PRIMARY KEY,
-            TransactionDateTime TEXT,
-            StaffID TEXT,
-            ItemID TEXT,
-            ItemName_TH TEXT,
-            ItemName_EN TEXT,
-            Category TEXT,
-            UnitPrice_THB REAL,
-            Quantity INTEGER,
-            TotalPrice_THB REAL,
-            PaymentMethod TEXT,
-            CustomerID TEXT,
-            IsMember INTEGER
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
 def fetch_first_n_rows(db_file, num_rows):
-    """Fetches and prints the first N rows from the 'transactions' table."""
+    """Fetches and prints the first N rows from the 'items' table."""
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
-    cursor.execute(f'SELECT * FROM transactions LIMIT {num_rows}')
+    cursor.execute(f'SELECT * FROM items LIMIT {num_rows}')
     rows = cursor.fetchall()
     conn.close()
     return rows
 
 if __name__ == "__main__":
-    create_database()
-    print("Database 'data.db' created successfully.")
-
     print("\nFetching first 3 rows from 'data.db':")
     first_3_rows = fetch_first_n_rows('data.db', 3)
     for row in first_3_rows:
