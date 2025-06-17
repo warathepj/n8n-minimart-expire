@@ -3,6 +3,7 @@ import csv
 import json
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import os
+from datetime import datetime
 
 PORT = 8000
 
@@ -26,7 +27,8 @@ class MyHandler(SimpleHTTPRequestHandler):
             # Convert rows to a list of dictionaries
             data = []
             for row in rows:
-                data.append(dict(zip(column_names, row)))
+                item = dict(zip(column_names, row))
+                data.append(item)
             
             self.wfile.write(json.dumps(data).encode('utf-8'))
             return
